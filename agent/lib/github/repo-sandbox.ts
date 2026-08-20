@@ -69,7 +69,7 @@ export async function factoryBootstrap({
     }
     await runOrThrow(
       sandbox,
-      'git config --global user.name "Foreman[bot]" && git config --global user.email "foreman[bot]@users.noreply.github.com"'
+      'git config --global user.name "Mercury[bot]" && git config --global user.email "mercury[bot]@users.noreply.github.com"'
     );
   } finally {
     await sandbox.setNetworkPolicy("allow-all");

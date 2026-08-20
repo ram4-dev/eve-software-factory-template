@@ -1,0 +1,1830 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Mercury · Cómo funciona la Mercury Software Factory</title>
+    <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-soft: #111111;
+      --panel: #161616;
+      --border: #2a2a2a;
+      --border-soft: #1f1f1f;
+      --text: #ededed;
+      --text-dim: #a1a1a1;
+      --text-faint: #6e6e6e;
+      --accent: #ffffff;
+      --green: #3ecf8e;
+      --amber: #f5a623;
+      --red: #ef4444;
+      --blue: #4d9fff;
+      --purple: #b18cff;
+      --radius: 10px;
+      --mono:
+        "SF Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+      --sans:
+        -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica,
+        Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code,
+    .mono {
+      padding: 0.1em 0.4em;
+      font-family: var(--mono);
+      font-size: 0.85em;
+      color: #e6e6e6;
+      background: #1c1c1c;
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+    }
+
+    .wrap {
+      max-width: 1040px;
+      padding: 0 24px;
+      margin: 0 auto;
+    }
+
+    /* Nav */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 10, 10, 0.85);
+      border-bottom: 1px solid var(--border-soft);
+      backdrop-filter: blur(10px);
+    }
+    nav .wrap {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      max-width: 1040px;
+      height: 56px;
+      overflow-x: auto;
+    }
+    nav .brand {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    nav .brand .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+    }
+    nav a.navlink {
+      font-size: 13px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    nav a.navlink:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    /* Hero */
+    header.hero {
+      padding: 80px 0 56px;
+      background:
+        radial-gradient(
+          600px 300px at 15% 0%,
+          rgba(77, 159, 255, 0.08),
+          transparent
+        ),
+        radial-gradient(
+          600px 300px at 85% 20%,
+          rgba(177, 140, 255, 0.08),
+          transparent
+        );
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 5px 12px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+    h1 {
+      margin: 0 0 16px;
+      font-size: 42px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    h1 .accent {
+      color: var(--green);
+    }
+    .lede {
+      max-width: 680px;
+      margin: 0 0 28px;
+      font-size: 18px;
+      color: var(--text-dim);
+    }
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .badge {
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    section {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    section:last-of-type {
+      border-bottom: none;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+    .section-intro {
+      max-width: 720px;
+      margin: 0 0 36px;
+      font-size: 16px;
+      color: var(--text-dim);
+    }
+
+    /* Overview cards */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .card {
+      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+    .card .icon {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+
+    /* Pipeline diagram */
+    .pipeline {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      padding: 8px 0 24px;
+      overflow-x: auto;
+    }
+    .station {
+      position: relative;
+      flex: 1;
+      min-width: 210px;
+      padding: 20px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .station .num {
+      margin-bottom: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+    .station h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+    .station .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-bottom: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      border-radius: 999px;
+    }
+    .tag.fast {
+      color: var(--green);
+      background: rgba(62, 207, 142, 0.12);
+      border: 1px solid rgba(62, 207, 142, 0.3);
+    }
+    .tag.plan {
+      color: var(--blue);
+      background: rgba(77, 159, 255, 0.12);
+      border: 1px solid rgba(77, 159, 255, 0.3);
+    }
+    .tag.code {
+      color: var(--amber);
+      background: rgba(245, 166, 35, 0.12);
+      border: 1px solid rgba(245, 166, 35, 0.3);
+    }
+    .tag.review {
+      color: var(--purple);
+      background: rgba(177, 140, 255, 0.12);
+      border: 1px solid rgba(177, 140, 255, 0.3);
+    }
+    .station p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .arrow {
+      display: flex;
+      flex: 0 0 32px;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--text-faint);
+    }
+    .loopback {
+      margin-top: 18px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-faint);
+      text-align: center;
+    }
+    .loopback .hl {
+      color: var(--purple);
+    }
+
+    .brain-note {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 18px 20px;
+      margin-top: 20px;
+      background: linear-gradient(
+        180deg,
+        rgba(177, 140, 255, 0.06),
+        transparent
+      );
+      border: 1px dashed rgba(177, 140, 255, 0.35);
+      border-radius: var(--radius);
+    }
+    .brain-note .icon {
+      font-size: 22px;
+    }
+    .brain-note strong {
+      color: var(--text);
+    }
+    .brain-note p {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* Entry points */
+    .entry-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .entry {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 18px;
+      align-items: start;
+      padding: 16px 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .entry .label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+    .entry .label .swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+    .entry p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* Timeline / data flow */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      padding-left: 28px;
+      margin-left: 10px;
+      border-left: 2px solid var(--border);
+    }
+    .tl-item {
+      position: relative;
+    }
+    .tl-item::before {
+      position: absolute;
+      top: 3px;
+      left: -33.5px;
+      width: 10px;
+      height: 10px;
+      content: "";
+      background: var(--bg);
+      border: 2px solid var(--green);
+      border-radius: 50%;
+    }
+    .tl-item h4 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+    .tl-item p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* Trust table */
+    table {
+      width: 100%;
+      overflow: hidden;
+      font-size: 13.5px;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    th,
+    td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    th {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #1b1b1b;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    td.status {
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .status.ok {
+      color: var(--green);
+    }
+    .status.wait {
+      color: var(--amber);
+    }
+    .status.deny {
+      color: var(--red);
+    }
+
+    /* File map */
+    .filemap {
+      padding: 22px 24px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--text-dim);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .filemap .dir {
+      color: var(--blue);
+    }
+    .filemap .file {
+      color: var(--text);
+    }
+    .filemap .comment {
+      color: var(--text-faint);
+    }
+
+    /* Security callouts */
+    .callout {
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .callout h4 {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+    .callout p {
+      margin: 0;
+      font-size: 13.5px;
+      color: var(--text-dim);
+    }
+    .callout.security {
+      border-left: 3px solid var(--red);
+    }
+    .callout.info {
+      border-left: 3px solid var(--blue);
+    }
+
+    /* Commands */
+    .cmdlist {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cmdrow {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .cmdrow code {
+      background: #1c1c1c;
+    }
+    .cmdrow span {
+      font-size: 13.5px;
+      color: var(--text-dim);
+    }
+
+    footer {
+      padding: 40px 0 60px;
+      font-size: 13px;
+      color: var(--text-faint);
+      text-align: center;
+    }
+
+    /* ---- Icon badges (SVG) ---- */
+    .icon-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+    }
+    .icon-badge svg {
+      width: 20px;
+      height: 20px;
+    }
+    .icon-badge.c-green {
+      color: var(--green);
+      background: rgba(62, 207, 142, 0.12);
+      border: 1px solid rgba(62, 207, 142, 0.3);
+    }
+    .icon-badge.c-blue {
+      color: var(--blue);
+      background: rgba(77, 159, 255, 0.12);
+      border: 1px solid rgba(77, 159, 255, 0.3);
+    }
+    .icon-badge.c-amber {
+      color: var(--amber);
+      background: rgba(245, 166, 35, 0.12);
+      border: 1px solid rgba(245, 166, 35, 0.3);
+    }
+    .icon-badge.c-purple {
+      color: var(--purple);
+      background: rgba(177, 140, 255, 0.12);
+      border: 1px solid rgba(177, 140, 255, 0.3);
+    }
+    .icon-badge.c-red {
+      color: var(--red);
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .icon-badge svg * {
+      stroke: currentColor;
+    }
+
+    .station .icon-badge {
+      margin-bottom: 12px;
+    }
+    .entry .icon-badge {
+      flex: none;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 0;
+      border-radius: 8px;
+    }
+    .entry .icon-badge svg {
+      width: 17px;
+      height: 17px;
+    }
+    .entry .label {
+      gap: 10px;
+    }
+    .entry .label .swatch {
+      display: none;
+    }
+
+    /* ---- Hero flow diagram ---- */
+    .hero-diagram {
+      position: relative;
+      padding: 28px 20px 18px;
+      margin-top: 44px;
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .hero-diagram::before {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background-image: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.05) 1px,
+        transparent 1px
+      );
+      background-size: 22px 22px;
+      -webkit-mask-image: radial-gradient(
+        ellipse at 50% 40%,
+        black 40%,
+        transparent 75%
+      );
+      mask-image: radial-gradient(
+        ellipse at 50% 40%,
+        black 40%,
+        transparent 75%
+      );
+    }
+    .hero-diagram svg {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .hd-node-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      fill: var(--text-dim);
+    }
+    .hd-node-title {
+      font-family: var(--sans);
+      font-size: 12.5px;
+      font-weight: 600;
+      fill: var(--text);
+    }
+    .hd-path {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    .hd-flow {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 6 10;
+      animation: hd-dash 1.8s linear infinite;
+    }
+    @keyframes hd-dash {
+      to {
+        stroke-dashoffset: -160;
+      }
+    }
+    .hd-flow.green {
+      stroke: var(--green);
+    }
+    .hd-flow.blue {
+      stroke: var(--blue);
+    }
+    .hd-flow.amber {
+      stroke: var(--amber);
+    }
+    .hd-flow.purple {
+      stroke: var(--purple);
+    }
+    .hd-dot {
+      animation: hd-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes hd-pulse {
+      0%,
+      100% {
+        opacity: 0.55;
+        r: 3.2;
+      }
+      50% {
+        opacity: 1;
+        r: 4.4;
+      }
+    }
+    .hd-box {
+      fill: var(--bg-soft);
+      stroke: var(--border);
+      stroke-width: 1.2;
+    }
+    .hd-box.hl {
+      stroke: var(--green);
+    }
+    .hd-caption {
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-faint);
+      text-align: center;
+    }
+
+    /* ---- Permission bars ---- */
+    .perm-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .perm-card {
+      padding: 18px 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .perm-card h4 {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0 0 14px;
+      font-size: 14px;
+    }
+    .perm-card h4 .icon-badge {
+      width: 28px;
+      height: 28px;
+      margin: 0;
+      border-radius: 7px;
+    }
+    .perm-card h4 .icon-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+    .perm-bar-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 9px;
+      font-size: 12.5px;
+    }
+    .perm-bar-row .plabel {
+      flex: 0 0 108px;
+      color: var(--text-dim);
+    }
+    .perm-bar-track {
+      flex: 1;
+      height: 6px;
+      overflow: hidden;
+      background: #232323;
+      border-radius: 4px;
+    }
+    .perm-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .perm-bar-fill.full {
+      width: 100%;
+      background: var(--green);
+    }
+    .perm-bar-fill.partial {
+      width: 55%;
+      background: var(--amber);
+    }
+    .perm-bar-fill.none {
+      width: 8%;
+      background: var(--red);
+    }
+
+    /* ---- Tree diagram for file map ---- */
+    .tree-wrap {
+      padding: 20px;
+      overflow-x: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .tree-wrap svg {
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 860px) {
+      .perm-grid {
+        grid-template-columns: 1fr;
+      }
+      .grid-3,
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .pipeline {
+        flex-direction: column;
+      }
+      .arrow {
+        padding: 4px 0;
+        transform: rotate(90deg);
+      }
+      .entry {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 32px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="wrap">
+        <div class="brand"><span class="dot"></span> Mercury</div>
+        <a class="navlink" href="#overview">Qué es</a>
+        <a class="navlink" href="#pipeline">El pipeline</a>
+        <a class="navlink" href="#entradas">Cómo llega el trabajo</a>
+        <a class="navlink" href="#confianza">Confianza y aprobaciones</a>
+        <a class="navlink" href="#estructura">Estructura del repo</a>
+        <a class="navlink" href="#seguridad">Seguridad</a>
+        <a class="navlink" href="#comandos">Comandos</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="wrap">
+        <span class="eyebrow">Mercury · Software Factory Template</span>
+        <h1>
+          Mercury: una fábrica de software que
+          <span class="accent">codea sola</span>
+          y deja las decisiones importantes a las personas
+        </h1>
+        <p class="lede">
+          Este repo define un agente orquestador (Mercury) construido sobre el
+          framework <strong>eve</strong>. Toma issues de GitHub o Linear, los
+          pasa por cuatro estaciones especializadas de IA, y entrega un
+          <strong>draft pull request</strong>
+          revisado. Nadie mergea sin que una persona lo apruebe.
+        </p>
+        <div class="hero-badges">
+          <span class="badge">agent/agent.ts</span>
+          <span class="badge">agent/instructions.ts</span>
+          <span class="badge">agent/subagents/*</span>
+          <span class="badge">Vercel · GitHub · Linear · Blob</span>
+        </div>
+
+        <div class="hero-diagram">
+          <svg
+            aria-label="Diagrama: fuentes de trabajo hacia Mercury, hacia las cuatro estaciones, hacia el pull request"
+            role="img"
+            viewBox="0 0 980 260"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <!-- source nodes -->
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="10"
+              y="30"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="70" y="54">
+              GitHub
+            </text>
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="10"
+              y="90"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="70" y="114">
+              Linear
+            </text>
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="10"
+              y="150"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="70" y="174">
+              TUI local
+            </text>
+
+            <!-- paths source -> mercury -->
+            <path class="hd-path" d="M130,50 C 210,50 210,120 300,120"></path>
+            <path class="hd-path" d="M130,110 C 210,110 210,120 300,120"></path>
+            <path class="hd-path" d="M130,170 C 210,170 210,120 300,120"></path>
+            <path
+              class="hd-flow green"
+              d="M130,50 C 210,50 210,120 300,120"
+            ></path>
+            <path
+              class="hd-flow blue"
+              d="M130,110 C 210,110 210,120 300,120"
+              style="animation-delay: -0.4s"
+            ></path>
+            <path
+              class="hd-flow amber"
+              d="M130,170 C 210,170 210,120 300,120"
+              style="animation-delay: -0.9s"
+            ></path>
+
+            <!-- Mercury node -->
+            <rect
+              class="hd-box hl"
+              height="60"
+              rx="10"
+              width="130"
+              x="300"
+              y="90"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="365" y="115">
+              Mercury
+            </text>
+            <text class="hd-node-label" text-anchor="middle" x="365" y="134">
+              orquestador
+            </text>
+
+            <!-- mercury -> stations -->
+            <path class="hd-path" d="M430,110 C 480,110 480,40 540,40"></path>
+            <path class="hd-path" d="M430,118 C 480,118 480,90 540,90"></path>
+            <path class="hd-path" d="M430,126 C 480,126 480,150 540,150"></path>
+            <path class="hd-path" d="M430,134 C 480,134 480,200 540,200"></path>
+            <path
+              class="hd-flow green"
+              d="M430,110 C 480,110 480,40 540,40"
+            ></path>
+            <path
+              class="hd-flow blue"
+              d="M430,118 C 480,118 480,90 540,90"
+              style="animation-delay: -0.3s"
+            ></path>
+            <path
+              class="hd-flow amber"
+              d="M430,126 C 480,126 480,150 540,150"
+              style="animation-delay: -0.6s"
+            ></path>
+            <path
+              class="hd-flow purple"
+              d="M430,134 C 480,134 480,200 540,200"
+              style="animation-delay: -0.9s"
+            ></path>
+
+            <!-- station nodes -->
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="540"
+              y="20"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="600" y="44">
+              Classifier
+            </text>
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="540"
+              y="70"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="600" y="94">
+              Analyst
+            </text>
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="540"
+              y="130"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="600" y="154">
+              Implementer
+            </text>
+            <rect
+              class="hd-box"
+              height="40"
+              rx="8"
+              width="120"
+              x="540"
+              y="180"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="600" y="204">
+              Reviewer
+            </text>
+
+            <!-- stations -> PR -->
+            <path class="hd-path" d="M660,40 C 760,40 760,120 850,120"></path>
+            <path class="hd-path" d="M660,90 C 760,90 760,120 850,120"></path>
+            <path class="hd-path" d="M660,150 C 760,150 760,120 850,120"></path>
+            <path class="hd-path" d="M660,200 C 760,200 760,120 850,120"></path>
+            <path
+              class="hd-flow purple"
+              d="M660,200 C 760,200 760,120 850,120"
+            ></path>
+
+            <!-- PR node -->
+            <rect
+              class="hd-box hl"
+              height="50"
+              rx="10"
+              width="120"
+              x="850"
+              y="95"
+            ></rect>
+            <text class="hd-node-title" text-anchor="middle" x="910" y="118">
+              Draft PR
+            </text>
+            <text class="hd-node-label" text-anchor="middle" x="910" y="135">
+              espera humano
+            </text>
+          </svg>
+          <div class="hd-caption">
+            el trabajo fluye de las fuentes → Mercury → las cuatro estaciones →
+            un pull request en draft
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="overview">
+      <div class="wrap">
+        <p class="kicker">Qué es</p>
+        <h2>Un orquestador, cuatro estaciones, un solo entregable</h2>
+        <p class="section-intro">
+          Mercury nunca escribe código ni analiza a fondo por su cuenta: enruta
+          trabajo, verifica lo que cada estación devuelve, y arma el resultado
+          final. Cada estación es un <strong>subagente declarado</strong> con
+          sus propias instrucciones, su propio sandbox (un checkout del repo) y
+          su propio conjunto de herramientas. eve descubre todo esto
+          directamente del sistema de archivos bajo <code>agent/</code>: no hay
+          un registro central ni un archivo de "wiring".
+        </p>
+        <div class="grid-3">
+          <div class="card">
+            <div class="icon-badge c-blue">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"
+                ></path>
+              </svg>
+            </div>
+            <h3>Descubrimiento por filesystem</h3>
+            <p>
+              El nombre de una tool es su nombre de archivo; el de un subagente,
+              su carpeta; el namespace de una extensión, su archivo. No hay
+              configuración manual de rutas.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon-badge c-purple">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <rect height="7" rx="1.5" width="7" x="3" y="3"></rect>
+                <rect height="7" rx="1.5" width="7" x="14" y="3"></rect>
+                <rect height="7" rx="1.5" width="7" x="3" y="14"></rect>
+                <rect height="7" rx="1.5" width="7" x="14" y="14"></rect>
+              </svg>
+            </div>
+            <h3>Estaciones aisladas</h3>
+            <p>
+              Un subagente corre en una sesión hija fresca y no hereda nada del
+              root: ni instrucciones, ni skills, ni conexiones, ni sandbox. El
+              orquestador empaqueta todo en el mensaje.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon-badge c-green">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"
+                ></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <h3>Personas en el loop</h3>
+            <p>
+              El resultado siempre es un PR en draft. Marcarlo "ready" y mergear
+              son decisiones humanas; mergear ni siquiera está en el set de
+              herramientas del agente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pipeline">
+      <div class="wrap">
+        <p class="kicker">El corazón del sistema</p>
+        <h2>El pipeline: classifier → analyst → implementer → reviewer</h2>
+        <p class="section-intro">
+          Las estaciones corren siempre en este orden, sin excepciones
+          ("trivial" lo decide el classifier, no el orquestador). Cada mensaje
+          de delegación es autocontenido: las estaciones no ven el historial de
+          conversación del root, así que reciben el work item completo más todo
+          lo que salió de las estaciones anteriores.
+        </p>
+
+        <div class="pipeline">
+          <div class="station">
+            <div class="num">01</div>
+            <div class="icon-badge c-green">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+            </div>
+            <span class="tag fast">modelo rápido</span>
+            <h3>Classifier</h3>
+            <p>
+              Triage de texto: tipo, prioridad, complejidad, área, si es
+              accionable y si necesita aclaración antes de seguir.
+            </p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="station">
+            <div class="num">02</div>
+            <div class="icon-badge c-blue">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 3h6l2 2v14l-2 2H9l-2-2V5l2-2Z"></path>
+                <path d="M9 8h6M9 12h6M9 16h3"></path>
+              </svg>
+            </div>
+            <span class="tag plan">planifica, no escribe</span>
+            <h3>Analyst</h3>
+            <p>
+              Arma un plan con criterios de aceptación, apoyado en un checkout
+              real del repo. Nunca modifica nada.
+            </p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="station">
+            <div class="num">03</div>
+            <div class="icon-badge c-amber">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path d="m8 6-5 6 5 6M16 6l5 6-5 6"></path>
+              </svg>
+            </div>
+            <span class="tag code">ejecuta y verifica</span>
+            <h3>Implementer</h3>
+            <p>
+              Crea una rama en su propio checkout, implementa el plan, corre los
+              checks del propio repo y hace push de la rama.
+            </p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="station">
+            <div class="num">04</div>
+            <div class="icon-badge c-purple">
+              <svg
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"
+                ></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <span class="tag review">otro proveedor de modelo</span>
+            <h3>Reviewer</h3>
+            <p>
+              Hace checkout de la rama, lee el diff real y juzga cada criterio
+              de aceptación de forma independiente.
+            </p>
+          </div>
+        </div>
+
+        <div class="loopback">
+          ↩ Si el reviewer devuelve <span class="hl">request_changes</span>,
+          vuelve al implementer con los hallazgos · máximo
+          <span class="hl">2 ciclos</span>
+          de revisión antes de frenar y reportar sin abrir PR
+        </div>
+
+        <div class="brain-note">
+          <span class="icon">🧠</span>
+          <div>
+            <strong
+              >La "factory brain" no es una estación, es memoria compartida.</strong
+            >
+            <p>
+              Notas durables sobre el repo objetivo (mañas del build, pasos de
+              verificación no obvios, hallazgos de review recurrentes,
+              convenciones) guardadas en Vercel Blob. Mercury la lee al empezar
+              cada tarea y, como las estaciones no pueden leerla directamente,
+              teje los datos relevantes en los mensajes que les manda. Al
+              terminar, si aprendió algo durable, la actualiza. Las lecturas
+              están abiertas a cualquier corrida; la escritura está protegida
+              (más abajo).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="entradas">
+      <div class="wrap">
+        <p class="kicker">Disparadores</p>
+        <h2>Cómo llega el trabajo</h2>
+        <p class="section-intro">
+          Cinco formas de arrancar una corrida, cada una con su propio nivel de
+          confianza y de autonomía.
+        </p>
+        <div class="entry-list">
+          <div class="entry">
+            <div class="label">
+              <div class="icon-badge c-green">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.2L3.2 9.59A2 2 0 0 0 3.83 11l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"
+                  ></path>
+                  <circle cx="7.5" cy="7.5" r="1.2"></circle>
+                </svg>
+              </div>
+              Label <code>factory</code>
+            </div>
+            <p>
+              <strong>No supervisado.</strong>
+              Un mantenedor etiqueta un issue. La sesión corre bajo un principal
+              autónomo construido para la ocasión: puede postear comentarios de
+              progreso, etiquetar, cerrar/reabrir el issue de origen y abrir PRs
+              en draft, pero nada más. Si necesita aclaración, pregunta y se
+              detiene (nunca deja una corrida no supervisada esperando input).
+            </p>
+          </div>
+          <div class="entry">
+            <div class="label">
+              <div class="icon-badge c-blue">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
+                  ></path>
+                </svg>
+              </div>
+              @Mercury mention
+            </div>
+            <p>
+              <strong>Supervisado.</strong>
+              Solo owners, members y collaborators del repo pueden invocarlo
+              comentando en un issue o PR; cualquier otro es ignorado. La sesión
+              corre con esa persona del otro lado: las preguntas van a ella y
+              las acciones que "envían" algo (ready, etc.) esperan su
+              aprobación.
+            </p>
+          </div>
+          <div class="entry">
+            <div class="label">
+              <div class="icon-badge c-purple">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M4 4h16v12H7l-3 3V4Z"></path>
+                  <path d="M8 9h8M8 12h5"></path>
+                </svg>
+              </div>
+              Linear Agent Sessions
+            </div>
+            <p>
+              Alguien delega un issue en Linear. La sesión queda marcada de
+              confianza (la membresía al workspace ya es el filtro), reporta
+              progreso como Agent Activities y al final devuelve el link del PR
+              en la misma sesión.
+            </p>
+          </div>
+          <div class="entry">
+            <div class="label">
+              <div class="icon-badge c-amber">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <rect height="14" rx="2" width="18" x="3" y="4"></rect>
+                  <path d="m7 9 3 3-3 3M13 15h4"></path>
+                </svg>
+              </div>
+              TUI local (<code>pnpm dev</code>)
+            </div>
+            <p>
+              Se le pasa un work item a mano. El principal de dev es
+              deliberadamente <em>no confiable</em>, así que cualquier escritura
+              en GitHub queda en pausa esperando una aprobación en la propia
+              TUI: es, de hecho, una demo en vivo del gate humano.
+            </p>
+          </div>
+          <div class="entry">
+            <div class="label">
+              <div class="icon-badge c-red">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 9v4M12 17h.01"></path>
+                  <path
+                    d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+                  ></path>
+                </svg>
+              </div>
+              CI en rojo sobre un PR <code>factory/*</code>
+            </div>
+            <p>
+              Un <code>check_suite</code> fallido sobre un PR que la propia
+              fábrica empujó dispara una corrida no supervisada: diagnostica la
+              falla y empuja un fix a la misma rama. Cuenta los intentos previos
+              en los comentarios del PR y, tras 2 intentos sin éxito, se detiene
+              y pide una persona. Los PRs que empujó una persona nunca se tocan.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="flujo">
+      <div class="wrap">
+        <p class="kicker">De punta a punta</p>
+        <h2>El recorrido completo de un work item</h2>
+        <div class="timeline">
+          <div class="tl-item">
+            <h4>1. Se agarra el trabajo real</h4>
+            <p>
+              Antes de rutear nada, Mercury lee el issue/PR/issue de Linear real
+              (nunca inventa números, títulos o estados) y aplica la skill
+              <code>triaging-issues</code>: busca duplicados, aprende el
+              vocabulario de labels del propio repo y decide si preguntar o
+              avanzar.
+            </p>
+          </div>
+          <div class="tl-item">
+            <h4>2. Corre el pipeline en orden</h4>
+            <p>
+              classifier → (researcher opcional, si falta un dato externo
+              verificable) → analyst → implementer → reviewer. Cada delegación
+              es un mensaje autocontenido; ninguna estación ve el historial del
+              orquestador.
+            </p>
+          </div>
+          <div class="tl-item">
+            <h4>3. Si el reviewer aprueba</h4>
+            <p>
+              Se abre un PR en <strong>draft</strong> con
+              <code>github__createPullRequest</code>, contra la rama por default
+              del repo. El cuerpo se arma con el problema, el enfoque, los
+              criterios de aceptación marcados pasa/no pasa, comandos de
+              verificación y sus resultados, y "Closes #N" si aplica.
+            </p>
+          </div>
+          <div class="tl-item">
+            <h4>4. Se reporta y se guarda memoria</h4>
+            <p>
+              Mercury contesta en el hilo de origen con el link del PR y un
+              resumen. Si aprendió algo durable sobre el repo (una maña del
+              build, un hallazgo de review recurrente), lo agrega a la factory
+              brain.
+            </p>
+          </div>
+          <div class="tl-item">
+            <h4>5. Una persona decide el resto</h4>
+            <p>
+              Marcar el PR "ready for review" y mergear son pasos humanos.
+              Mergear ni siquiera está en el set de tools del agente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="confianza">
+      <div class="wrap">
+        <p class="kicker">El modelo de confianza</p>
+        <h2>Qué puede hacer cada tipo de llamador</h2>
+        <p class="section-intro">
+          La confianza se decide en el <em>dispatch</em> (en los hooks de los
+          channels), nunca en el prompt. Todo vive en
+          <code>agent/lib/trust.ts</code>
+          y las políticas de aprobación de
+          <code>agent/lib/github/approval.ts</code>: cada tool de escritura de
+          GitHub devuelve <code>not-applicable</code> (corre),
+          <code>user-approval</code>
+          (espera a una persona) o
+          <code>denied</code>
+          según quién llama.
+        </p>
+        <div class="perm-grid">
+          <div class="perm-card">
+            <h4>
+              <div class="icon-badge c-green">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.2L3.2 9.59A2 2 0 0 0 3.83 11l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"
+                  ></path>
+                </svg>
+              </div>
+              No supervisado
+            </h4>
+            <div class="perm-bar-row">
+              <span class="plabel">Comentar / labels</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill full"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Draft PR</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill full"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">PR ready / merge</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill none"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Factory brain (write)</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill none"></div>
+              </div>
+            </div>
+          </div>
+          <div class="perm-card">
+            <h4>
+              <div class="icon-badge c-blue">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
+                  ></path>
+                </svg>
+              </div>
+              Mención confiable
+            </h4>
+            <div class="perm-bar-row">
+              <span class="plabel">Comentar / labels</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill full"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Draft PR</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill full"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">PR ready / merge</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill partial"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Factory brain (write)</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill full"></div>
+              </div>
+            </div>
+          </div>
+          <div class="perm-card">
+            <h4>
+              <div class="icon-badge c-amber">
+                <svg
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <rect height="14" rx="2" width="18" x="3" y="4"></rect>
+                  <path d="m7 9 3 3-3 3M13 15h4"></path>
+                </svg>
+              </div>
+              TUI local (dev)
+            </h4>
+            <div class="perm-bar-row">
+              <span class="plabel">Comentar / labels</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill partial"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Draft PR</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill partial"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">PR ready / merge</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill none"></div>
+              </div>
+            </div>
+            <div class="perm-bar-row">
+              <span class="plabel">Factory brain (write)</span>
+              <div class="perm-bar-track">
+                <div class="perm-bar-fill partial"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p
+          style="
+            font-size: 12.5px;
+            color: var(--text-faint);
+            margin: -18px 0 24px;
+          "
+        >
+          Barra llena = corre directo · barra media = espera aprobación humana ·
+          barra casi vacía = denegado
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Acción</th>
+              <th>No supervisado (label)</th>
+              <th>Mención confiable</th>
+              <th>TUI local (dev)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Comentar en el issue/PR de origen</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status wait">espera aprobación</td>
+            </tr>
+            <tr>
+              <td>Etiquetar (labels)</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status wait">espera aprobación</td>
+            </tr>
+            <tr>
+              <td>Cerrar / reabrir issue</td>
+              <td class="status ok">✓ permitido (reversible)</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status wait">espera aprobación</td>
+            </tr>
+            <tr>
+              <td>Abrir PR en <strong>draft</strong></td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status wait">espera aprobación</td>
+            </tr>
+            <tr>
+              <td>Marcar PR "ready" / mergear</td>
+              <td class="status deny">✗ denegado</td>
+              <td class="status wait">espera aprobación</td>
+              <td class="status deny">✗ no existe la tool</td>
+            </tr>
+            <tr>
+              <td>Escribir en la factory brain</td>
+              <td class="status deny">✗ denegado</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status wait">espera aprobación</td>
+            </tr>
+            <tr>
+              <td>Escritura en Linear (MCP)</td>
+              <td class="status deny">✗ denegado</td>
+              <td class="status ok">✓ permitido</td>
+              <td class="status ok">✓ permitido</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="estructura">
+      <div class="wrap">
+        <p class="kicker">Dónde vive cada cosa</p>
+        <h2>Estructura del repo</h2>
+        <p class="section-intro">
+          eve descubre todo desde <code>agent/</code>. No hay wiring manual: la
+          ubicación en el filesystem es la identidad.
+        </p>
+        <div class="filemap">
+          <pre
+            style="margin: 0; white-space: pre"
+          ><span class="dir">agent/</span>
+  <span class="file">agent.ts</span>              <span class="comment"># modelo + presupuesto de tokens de la sesión completa</span>
+  <span class="file">instructions.ts</span>       <span class="comment"># el prompt del orquestador (defineInstructions), inyecta FACTORY_REPO</span>
+  <span class="dir">channels/</span>
+    <span class="file">github.ts</span>           <span class="comment"># onComment, onIssue, onCheckSuite, onPullRequest</span>
+    <span class="file">linear.ts</span>           <span class="comment"># Agent Sessions de Linear</span>
+    <span class="file">eve.ts</span>              <span class="comment"># auth de la ruta inbound de eve</span>
+  <span class="dir">connections/</span>
+    <span class="file">linear.ts</span>          <span class="comment"># servidor MCP de Linear</span>
+  <span class="dir">extensions/</span>
+    <span class="file">github.ts</span>          <span class="comment"># @github-tools/eve-extension → tools github__*</span>
+  <span class="file">sandbox.ts</span>            <span class="comment"># sandbox del root (Vercel Sandbox)</span>
+  <span class="dir">subagents/</span>
+    <span class="dir">classifier/</span>         <span class="comment"># agent.ts + instructions.md — solo texto</span>
+    <span class="dir">analyst/</span>            <span class="comment"># + sandbox.ts (checkout del repo), nunca escribe</span>
+    <span class="dir">implementer/</span>        <span class="comment"># + tools/checkout_branch.ts, tools/push_branch.ts</span>
+    <span class="dir">reviewer/</span>           <span class="comment"># otro proveedor de modelo + tools/checkout_branch.ts</span>
+    <span class="dir">researcher/</span>         <span class="comment"># research web con contexto fresco</span>
+  <span class="dir">tools/</span>
+    <span class="file">agent.ts</span>                 <span class="comment"># disableTool(): evita que el root se salte las estaciones</span>
+    <span class="file">get_user_preferences.ts</span>
+    <span class="file">save_user_preferences.ts</span>
+    <span class="file">clear_user_preferences.ts</span> <span class="comment"># protegido con approval</span>
+    <span class="file">read_factory_brain.ts</span>
+    <span class="file">update_factory_brain.ts</span>   <span class="comment"># protegido por factoryBrainPolicy</span>
+  <span class="dir">lib/</span>
+    <span class="file">constants.ts</span>       <span class="comment"># FACTORY_REPO, FACTORY_LABEL, requireEnv</span>
+    <span class="file">trust.ts</span>           <span class="comment"># única autoridad de confianza</span>
+    <span class="file">models.ts</span>          <span class="comment"># mapa MODELS: un lugar para todos los modelos</span>
+    <span class="dir">github/</span>
+      <span class="file">approval.ts</span>      <span class="comment"># todas las políticas de aprobación</span>
+      <span class="file">git-remote.ts</span>    <span class="comment"># validateBranch, token inyectado en el firewall</span>
+      <span class="file">repo-sandbox.ts</span>  <span class="comment"># bootstrap compartido por las estaciones</span>
+  <span class="dir">skills/</span>
+    <span class="dir">writing-quality/</span>
+    <span class="dir">triaging-issues/</span>
+    <span class="dir">github-linear-bridging/</span>
+<span class="dir">evals/</span>                    <span class="comment"># smoke, routing/, safety/, pipeline/ (opt-in, cuesta tokens reales)</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="seguridad">
+      <div class="wrap">
+        <p class="kicker">Barreras estructurales, no promesas del prompt</p>
+        <h2>Seguridad y aislamiento</h2>
+        <p class="section-intro">
+          Las garantías importantes están en el código, no en instrucciones que
+          el modelo podría ignorar.
+        </p>
+
+        <div class="callout security">
+          <h4>🔒 Las credenciales de git nunca entran al sandbox</h4>
+          <p>
+            Los clones, fetches y pushes de las estaciones apuntan siempre a
+            <code>https://github.com/&lt;FACTORY_REPO&gt;.git</code>
+            literal, nunca al remoto <code>origin</code> (que el modelo podría
+            reescribir). El token de instalación se inyecta a nivel del firewall
+            del sandbox, como transformación de headers al salir hacia
+            github.com, y se descarta después.
+          </p>
+        </div>
+        <div class="callout security">
+          <h4>🔒 <code>push_branch</code> es inofensivo por construcción</h4>
+          <p>
+            <code>validateBranch</code>
+            rechaza <code>main</code>/<code>master</code>, <code>refs/*</code>,
+            <code>HEAD</code>
+            y cualquier carácter fuera de un set conservador (para que ningún
+            metacarácter de shell llegue a la línea de comandos). Una rama
+            feature sola no puede shippear nada.
+          </p>
+        </div>
+        <div class="callout security">
+          <h4>🔒 Las estaciones corren en "task mode"</h4>
+          <p>
+            Cada <code>agent.ts</code> de estación declara un
+            <code>outputSchema</code>: eso obliga a devolver salida estructurada
+            y les impide pedir aprobaciones o esperar input. Por diseño, ninguna
+            herramienta dentro de una estación puede necesitar aprobación
+            humana.
+          </p>
+        </div>
+        <div class="callout security">
+          <h4>🔒 El label <code>factory</code> no se puede falsificar</h4>
+          <p>
+            Solo la acción <code>labeled</code> del webhook dispara la corrida;
+            un label puesto al crear el issue (que los templates permiten a
+            reporters no autenticados) no cuenta. Aplicar un label requiere
+            permiso de triage sobre el repo.
+          </p>
+        </div>
+        <div class="callout info">
+          <h4>ℹ️ Draft PRs son el techo de lo no supervisado</h4>
+          <p>
+            Cualquier PR con <code>draft: true</code> corre para cualquier
+            llamador porque un draft no puede mergearse. Todo lo que sí puede
+            shippear (PRs no-draft, marcar ready) espera a una persona y está
+            denegado sin supervisión. Las tools de merge ni siquiera están en el
+            set de herramientas.
+          </p>
+        </div>
+        <div class="callout info">
+          <h4>ℹ️ Superficie de prompt-injection</h4>
+          <p>
+            La fábrica lee cuerpos de issues, comentarios y diffs de terceros, y
+            sus estaciones ejecutan código del propio repo (tests, lint) dentro
+            de sandboxes. El límite es estructural: sesiones no supervisadas
+            corren bajo el principal autónomo denegado por defecto, la conexión
+            de Linear niega escrituras sin supervisión, y todo lo que shippea
+            necesita una persona.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="comandos">
+      <div class="wrap">
+        <p class="kicker">Para trabajar en este repo</p>
+        <h2>Comandos útiles</h2>
+        <div class="cmdlist">
+          <div class="cmdrow">
+            <code>pnpm install</code
+            ><span>Instala dependencias (Node 24.x)</span>
+          </div>
+          <div class="cmdrow">
+            <code>pnpm dev</code
+            ><span
+              >TUI local de eve — correr <code>/model</code> una vez para
+              vincular un proveedor de modelo</span
+            >
+          </div>
+          <div class="cmdrow">
+            <code>pnpm typecheck</code><span>TypeScript sin emitir (tsc)</span>
+          </div>
+          <div class="cmdrow">
+            <code>pnpm check</code>
+            / <code>pnpm fix</code
+            ><span>Lint y formato (Ultracite, un preset de Biome)</span>
+          </div>
+          <div class="cmdrow">
+            <code>pnpm validate</code
+            ><span
+              >check + typecheck + <code>eve info</code> en un solo comando</span
+            >
+          </div>
+          <div class="cmdrow">
+            <code>npx eve info</code
+            ><span>Imprime la superficie descubierta + diagnósticos</span>
+          </div>
+          <div class="cmdrow">
+            <code>pnpm eval --tag fast</code
+            ><span>Suite de evals barata: smoke + safety</span>
+          </div>
+          <div class="cmdrow">
+            <code>pnpm eval pipeline/full-pipeline</code
+            ><span
+              >Corre el pipeline completo y empuja una rama real — usar contra
+              un repo de prueba</span
+            >
+          </div>
+          <div class="cmdrow">
+            <code>eve deploy</code
+            ><span
+              >Deploy a producción en Vercel (envuelve
+              <code>vercel deploy --prod</code>)</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        Generado a partir de <code>ARCHITECTURE.md</code>,
+        <code>README.md</code>
+        y <code>agent/instructions.ts</code> de este repositorio.
+      </div>
+    </footer>
+  </body>
+</html>

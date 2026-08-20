@@ -1,5 +1,5 @@
 import { defineAgent } from "eve";
-import { MODELS } from "../../lib/models.js";
+import { agentModelConfig } from "../../lib/models.js";
 
 /**
  * Station 3: implementation.
@@ -14,6 +14,7 @@ import { MODELS } from "../../lib/models.js";
  * request is opened later by the orchestrator, after review.
  */
 export default defineAgent({
+  ...agentModelConfig("implementer"),
   description:
     "Execute an approved implementation plan in a checkout of the factory repository: " +
     "write the code on a feature branch, run the repository's own checks, commit, and " +
@@ -21,7 +22,6 @@ export default defineAgent({
     "results, and deviations. The caller passes the work item, classification, and full " +
     "analysis in the message; on a revision run it also passes the existing branch and " +
     "the reviewer's findings.",
-  model: MODELS.implementer,
   outputSchema: {
     additionalProperties: false,
     properties: {

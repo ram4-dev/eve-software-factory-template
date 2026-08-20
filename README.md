@@ -1,43 +1,43 @@
-# eve Software Factory Template
+# Mercury
 
 [![Agent Stack](https://img.shields.io/badge/Agent%20Stack-000?style=flat-square&logo=vercel&logoColor=FFF&labelColor=000&color=000)](https://vercel.com/kb/agent-stack)
 [![MIT License](https://img.shields.io/badge/License-MIT-000?style=flat-square&logo=opensourceinitiative&logoColor=white&labelColor=000&color=000)](LICENSE)
 
-Meet **Foreman**, an eve software factory that puts AI agents on every stage of the development loop and keeps people on the judgment calls.
+Meet **Mercury**, a software factory that puts AI agents on every stage of the development loop and keeps people on the judgment calls.
 
 The orchestrator takes work items from GitHub and Linear, moves each one through four stations, and delivers a reviewed draft pull request on your repository. You review, mark ready, and merge.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?project-name=eve-software-factory&repository-name=eve-software-factory-template&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Feve-software-factory-template&env=FACTORY_REPO,FACTORY_LABEL&envDefaults=%7B%22FACTORY_LABEL%22%3A%22factory%22%7D&envDescription=FACTORY_REPO%20is%20the%20owner%2Frepo%20the%20factory%20works%20on.%20FACTORY_LABEL%20is%20the%20issue%20label%20that%20hands%20an%20issue%20to%20the%20factory%3B%20the%20default%20label%20is%20fine.&connect=%5B%7B%22type%22%3A%22github%22%2C%22env%22%3A%22GITHUB_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Fgithub%22%7D%2C%7B%22type%22%3A%22linear%22%2C%22env%22%3A%22LINEAR_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Flinear%22%7D%5D&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?https://vercel.com/new/clone?project-name=mercury&repository-name=mercury&repository-url=https%3A%2F%2Fgithub.com%2Fram4-dev%2Fmercury&env=FACTORY_REPO,FACTORY_LABEL&envDefaults=%7B%22FACTORY_LABEL%22%3A%22factory%22%7D&envDescription=FACTORY_REPO%20is%20the%20owner%2Frepo%20the%20factory%20works%20on.%20FACTORY_LABEL%20is%20the%20issue%20label%20that%20hands%20an%20issue%20to%20the%20factory%3B%20the%20default%20label%20is%20fine.&connect=%5B%7B%22type%22%3A%22github%22%2C%22env%22%3A%22GITHUB_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Fgithub%22%7D%2C%7B%22type%22%3A%22linear%22%2C%22env%22%3A%22LINEAR_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Flinear%22%7D%5D&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
 
 ## How it works
 
-- **Classifier** triages the work item: type, priority, complexity, actionable or not. When the item isn't actionable, Foreman asks the requester instead of building the wrong thing.
+- **Classifier** triages the work item: type, priority, complexity, actionable or not. When the item isn't actionable, Mercury asks the requester instead of building the wrong thing.
 - **Analyst** turns it into a plan with acceptance criteria, grounded in a live checkout of your repository.
 - **Implementer** executes the plan in its own sandbox checkout, runs your repo's own checks, and pushes a feature branch.
 - **Reviewer** independently judges the pushed branch against the acceptance criteria, on a different model vendor, and can send the work back for up to 2 revision cycles.
-- The **factory brain** isn't a station: it's shared, durable memory of your repo that Foreman reads at the start of a run and records learnings into at the end.
+- The **factory brain** isn't a station: it's shared, durable memory of your repo that Mercury reads at the start of a run and records learnings into at the end.
 
 Each station is a declared subagent with its own instructions, sandbox, and tool surface. The reviewer never sees the implementer's reasoning, only its pushed branch. That separation is what makes the review meaningfully independent.
 
 ## How work arrives
 
 - **Label an issue `factory`.** The pipeline runs unattended, posts progress comments as stations complete, and links a draft PR from the issue. When clarification is needed, it posts its questions and stops.
-- **@Foreman on an issue or PR.** Mentions from repo owners, members, and collaborators start an attended session. Anyone else is ignored.
+- **@Mercury on an issue or PR.** Mentions from repo owners, members, and collaborators start an attended session. Anyone else is ignored.
 - **Delegate in Linear.** Linear Agent Sessions run the same pipeline and report back as Agent Activities.
 - **The dev TUI.** Hand it a work item locally. Writes park on approval cards there, which doubles as a demo of the human gate.
 - **Red CI on a factory PR.** When a check suite fails on a pull request the factory pushed, it diagnoses the failure and pushes a fix to the same branch; after 2 unsuccessful attempts it pauses and asks for a person. PRs people pushed are never touched.
 
 ## Factory memory
 
-Foreman keeps a **factory brain**: one shared, durable set of notes about the target repository, stored in Vercel Blob.
+Mercury keeps a **factory brain**: one shared, durable set of notes about the target repository, stored in Vercel Blob.
 
-It's where the factory records what it learns across runs: build quirks, verification steps that aren't obvious, review findings that keep recurring, repo conventions. Later runs start with that context instead of rediscovering it. Foreman reads the brain at the start of a task, weaves the relevant facts into the messages it sends stations, and records durable facts back once the work lands.
+It's where the factory records what it learns across runs: build quirks, verification steps that aren't obvious, review findings that keep recurring, repo conventions. Later runs start with that context instead of rediscovering it. Mercury reads the brain at the start of a task, weaves the relevant facts into the messages it sends stations, and records durable facts back once the work lands.
 
 The brain is scoped to `FACTORY_REPO`: one brain per deployment, and retargeting a deployment at another repository gets a fresh one. Reads are open to every run. Writes follow the trust model: trusted callers write directly, unattended runs are denied (so an issue body can't poison shared context), and the dev TUI parks the write on approval.
 
 ## Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?project-name=eve-software-factory&repository-name=eve-software-factory-template&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Feve-software-factory-template&env=FACTORY_REPO,FACTORY_LABEL&envDefaults=%7B%22FACTORY_LABEL%22%3A%22factory%22%7D&envDescription=FACTORY_REPO%20is%20the%20owner%2Frepo%20the%20factory%20works%20on.%20FACTORY_LABEL%20is%20the%20issue%20label%20that%20hands%20an%20issue%20to%20the%20factory%3B%20the%20default%20label%20is%20fine.&connect=%5B%7B%22type%22%3A%22github%22%2C%22env%22%3A%22GITHUB_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Fgithub%22%7D%2C%7B%22type%22%3A%22linear%22%2C%22env%22%3A%22LINEAR_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Flinear%22%7D%5D&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?project-name=mercury&repository-name=mercury&repository-url=https%3A%2F%2Fgithub.com%2Fram4-dev%2Fmercury&env=FACTORY_REPO,FACTORY_LABEL&envDefaults=%7B%22FACTORY_LABEL%22%3A%22factory%22%7D&envDescription=FACTORY_REPO%20is%20the%20owner%2Frepo%20the%20factory%20works%20on.%20FACTORY_LABEL%20is%20the%20issue%20label%20that%20hands%20an%20issue%20to%20the%20factory%3B%20the%20default%20label%20is%20fine.&connect=%5B%7B%22type%22%3A%22github%22%2C%22env%22%3A%22GITHUB_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Fgithub%22%7D%2C%7B%22type%22%3A%22linear%22%2C%22env%22%3A%22LINEAR_CONNECTOR%22%2C%22triggers%22%3Atrue%2C%22triggerPath%22%3A%22%2Feve%2Fv1%2Flinear%22%7D%5D&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22public%22%7D%5D)
 
 The button provisions everything: the **GitHub** connector, **Linear** connector, **Vercel Blob** store, and a prompt for the `FACTORY_REPO` and `FACTORY_LABEL` environment variables.
 
@@ -61,7 +61,7 @@ Run the manual setup commands in your terminal if you prefer to set the template
 
 ```bash
 # Clone the template and install dependencies
-git clone https://github.com/vercel-labs/eve-software-factory-template.git my-factory
+git clone https://github.com/ram4-dev/mercury.git my-factory
 cd my-factory
 pnpm install
 
@@ -123,17 +123,32 @@ Point `FACTORY_REPO` at a scratch repository before running the full-pipeline ev
 ## Customizing
 
 - **The pipeline:** The orchestrator's routing and delivery rules live in `agent/instructions.ts`. Each station's procedure lives in `agent/subagents/<station>/instructions.md`; its model and output contract in the station's `agent.ts`.
-- **Models:** Every assignment lives in `agent/lib/models.ts`; swapping one is a one-line edit. Keep the implementer and reviewer on different vendors so the review stays independent.
+- **Models:** Every assignment lives in `agent/lib/models.ts`; swapping one is a one-line edit. Keep the implementer and reviewer on different models so the review stays independent (different vendors on the gateway path, different model ids on NaN).
 - **The approval policy:** `agent/lib/github/approval.ts` is the whole policy in a handful of small functions; `agent/extensions/github.ts` maps GitHub tools onto it. Changing what unattended runs may do is an edit there, not a prompt change.
 - **The intake label:** `FACTORY_LABEL` in `agent/lib/constants.ts`.
-- **PR summaries:** Foreman posts an orienting comment on newly opened PRs; remove the `onPullRequest` hook in `agent/channels/github.ts` if you don't want that.
+- **PR summaries:** Mercury posts an orienting comment on newly opened PRs; remove the `onPullRequest` hook in `agent/channels/github.ts` if you don't want that.
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full component map and trust model, and [`AGENTS.md`](./AGENTS.md) if you're working on the template with an AI coding agent.
+
+## NaN Builders provider
+
+By default, models route through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) using string ids in `agent/lib/models.ts`. To use [NaN Builders](https://nan.builders) instead, install is already wired via the workspace package [`@nan-builders/ai-sdk`](./packages/nan-ai-sdk/README.md).
+
+Set in your environment (or `.env`):
+
+```env
+MODEL_PROVIDER=nan
+NAN_API_KEY=sk-your-nan-key-here
+```
+
+Model presets when NaN is active: `qwen3.6` for orchestration and triage, `deepseek-v4-flash` for the implementer, `gemma4` for the reviewer. Change assignments in `agent/lib/models.ts`.
+
+The dev TUI `/model` command targets AI Gateway string ids; with NaN, edit `models.ts` instead. For standalone use outside this template, publish or copy `packages/nan-ai-sdk`. Community configs also live in [this gist](https://gist.github.com/686f6c61/8c05e9e6a1fa6062f5a23f56edac46af).
 
 ## Extending
 
 - **Continuous operation:** Add a schedule that sweeps for queued work on a cron; the approval policies already recognize schedule turns (`isScheduleAppAuth` in `agent/lib/trust.ts`).
-- **Merge behind approval:** Add `mergePullRequest` to the extension's allowlist mapped to `shipPolicy` if you want "@Foreman merge it" to work from a comment.
+- **Merge behind approval:** Add `mergePullRequest` to the extension's allowlist mapped to `shipPolicy` if you want "@Mercury merge it" to work from a comment.
 - **More intake:** The GitHub channel also has `onCheckRun`/`onWorkflowRun` hooks, and eve ships Slack, Teams, and other channels.
 - **Deeper station tooling:** Stations are ordinary eve agents; give the analyst a Sentry MCP connection, or the reviewer a browser extension. Stations inherit nothing, so capabilities go in the station's own directory.
 

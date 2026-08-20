@@ -1,13 +1,75 @@
-// One place to change every agent's model. Ids are Vercel AI Gateway strings (<provider>/<model>),
-// so routing, credentials, and fallbacks stay on the gateway and no provider SDK is wired in.
-// Each agent.ts reads its entry here (model: MODELS.<agent>) instead of hardcoding a string.
-export const MODELS = {
-  analyst: "openai/gpt-5.6-terra-fast",
-  classifier: "openai/gpt-5.6-terra-fast",
-  implementer: "anthropic/claude-fable-5", // the station that writes the code gets the strongest coding model
-  orchestrator: "openai/gpt-5.6-terra-fast",
-  researcher: "openai/gpt-5.6-terra-fast",
-  reviewer: "openai/gpt-5.6-terra-fast", // different vendor than implementer on purpose: independent review
+import type { LanguageModelV4 } from "@ai-sdk/provider";
+import { createNan, nanContextWindow } from "@nan-builders/ai-sdk";
+import { requireEnv } from "./constants.js";
+
+// One place to change every agent's model assignment.
+// Default: Vercel AI Gateway strings (<provider>/<model>).
+// Opt-in NaN: set MODEL_PROVIDER=nan and NAN_API_KEY; see packages/nan-ai-sdk/README.md.
+
+export type ModelProvider = "gateway" | "nan";
+
+export type FactoryModel = LanguageModelV4 | string;
+
+const MODEL_PROVIDER = (process.env.MODEL_PROVIDER ??
+  "gateway") as ModelProvider;
+
+if (MODEL_PROVIDER !== "gateway" && MODEL_PROVIDER !== "nan") {
+  throw new Error(
+    `MODEL_PROVIDER must be "gateway" or "nan", got '${process.env.MODEL_PROVIDER}'.`
+  );
+}
+
+export const modelProvider: ModelProvider = MODEL_PROVIDER;
+
+export const isNanProvider = modelProvider === "nan";
+
+const GATEWAY_MODELS = {
+  analyst: "google/gemini-3.6-flash",
+  classifier: "google/gemini-3.6-flash",
+  implementer: "google/gemini-3.6-flash",
+  orchestrator: "google/gemini-3.6-flash",
+  researcher: "google/gemini-3.6-flash",
+  reviewer: "google/gemini-2.5-flash",
 } as const;
 
-export type FactoryAgent = keyof typeof MODELS;
+const NAN_MODEL_IDS = {
+  analyst: "qwen3.6",
+  classifier: "qwen3.6",
+  implementer: "deepseek-v4-flash",
+  orchestrator: "qwen3.6",
+  researcher: "qwen3.6",
+  reviewer: "gemma4",
+} as const;
+
+const buildNanModels = () => {
+  requireEnv("NAN_API_KEY", "sk-your-nan-key");
+  const nan = createNan();
+  return {
+    analyst: nan(NAN_MODEL_IDS.analyst),
+    classifier: nan(NAN_MODEL_IDS.classifier),
+    implementer: nan(NAN_MODEL_IDS.implementer),
+    orchestrator: nan(NAN_MODEL_IDS.orchestrator),
+    researcher: nan(NAN_MODEL_IDS.researcher),
+    reviewer: nan(NAN_MODEL_IDS.reviewer),
+  } as const;
+};
+
+export const MODELS: Record<keyof typeof GATEWAY_MODELS, FactoryModel> =
+  isNanProvider ? buildNanModels() : GATEWAY_MODELS;
+
+export type FactoryAgent = keyof typeof GATEWAY_MODELS;
+
+export const agentModelConfig = (agent: FactoryAgent) => {
+  const model = MODELS[agent];
+  if (typeof model === "string") {
+    return { model };
+  }
+  return {
+    model,
+    modelContextWindowTokens: nanContextWindow(NAN_MODEL_IDS[agent]),
+  };
+};
+
+export const judgeModel: FactoryModel = isNanProvider
+  ? createNan()(NAN_MODEL_IDS.orchestrator)
+  : "google/gemini-3.6-flash";

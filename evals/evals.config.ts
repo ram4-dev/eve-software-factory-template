@@ -1,4 +1,5 @@
 import { defineEvalConfig } from "eve/evals";
+import { judgeModel } from "../agent/lib/models.js";
 
 /**
  * Run-wide eval configuration.
@@ -10,5 +11,5 @@ import { defineEvalConfig } from "eve/evals";
  * README's evals section for the full matrix.
  */
 export default defineEvalConfig({
-  judge: { model: "google/gemini-3.6-flash" },
+  judge: { model: judgeModel },
 });

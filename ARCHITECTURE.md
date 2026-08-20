@@ -4,14 +4,14 @@ A map of how this agent is put together, for humans and AI agents working in the
 
 ## Project identification
 
-- **Name:** eve Software Factory (bot name Foreman)
+- **Name:** Mercury (bot name Mercury)
 - **Maintainer:** Vercel Labs
 - **License:** MIT
 - **Last updated:** 2026-08-13
 
 ## Overview
 
-This is a software factory built on the [eve](https://eve.dev) agent framework: the root agent is an orchestrator that takes work items from GitHub (an issue labeled `factory`, or an @Foreman mention) and Linear (Agent Sessions), and moves each through four stations, each a declared subagent with its own instructions, sandbox, and tool surface: **classifier** (triage), **analyst** (plan with acceptance criteria, grounded in a repo checkout), **implementer** (executes the plan in its own checkout, runs the repo's checks, pushes a feature branch), and **reviewer** (independent verdict on the pushed branch, different model vendor, up to 2 revision cycles). The finished product is a draft pull request on `FACTORY_REPO`. People stay in the loop where judgment lives: marking a PR ready stops the session to request approval, merging isn't in the tool surface at all, and unattended runs are denied everything except labels, progress comments on their own intake issue, closing or reopening issues, and draft PRs. Closing an issue runs ungated for every caller: it is reversible triage, and a reopen undoes it. The agent runs on Vercel, the same way locally (`eve dev`) and in production (`eve deploy`).
+This is a software factory built on the [eve](https://eve.dev) agent framework: the root agent is an orchestrator that takes work items from GitHub (an issue labeled `factory`, or an @Mercury mention) and Linear (Agent Sessions), and moves each through four stations, each a declared subagent with its own instructions, sandbox, and tool surface: **classifier** (triage), **analyst** (plan with acceptance criteria, grounded in a repo checkout), **implementer** (executes the plan in its own checkout, runs the repo's checks, pushes a feature branch), and **reviewer** (independent verdict on the pushed branch, different model vendor, up to 2 revision cycles). The finished product is a draft pull request on `FACTORY_REPO`. People stay in the loop where judgment lives: marking a PR ready stops the session to request approval, merging isn't in the tool surface at all, and unattended runs are denied everything except labels, progress comments on their own intake issue, closing or reopening issues, and draft PRs. Closing an issue runs ungated for every caller: it is reversible triage, and a reopen undoes it. The agent runs on Vercel, the same way locally (`eve dev`) and in production (`eve deploy`).
 
 eve discovers every capability from the filesystem under `agent/`. There is no central registry or wiring file: a tool's name is its filename, a subagent's name is its directory, an extension's namespace is its filename.
 
@@ -22,7 +22,7 @@ agent/
   agent.ts                  # model configuration (defineAgent): compaction + a session token budget sized for the whole pipeline
   instructions.ts           # defineInstructions: the orchestrator prompt, resolved at build time (injects FACTORY_REPO)
   channels/
-    github.ts               # eve GitHub channel via Vercel Connect; botName "Foreman"; four hooks: onComment (mention, association-gated, stamps trusted), onIssue ('factory' label -> unattended pipeline under the autonomous principal), onCheckSuite (red CI on factory/* PRs -> unattended fix loop, capped at 2 attempts), onPullRequest (summary comment on opened PRs, bots skipped)
+    github.ts               # eve GitHub channel via Vercel Connect; botName "Mercury"; four hooks: onComment (mention, association-gated, stamps trusted), onIssue ('factory' label -> unattended pipeline under the autonomous principal), onCheckSuite (red CI on factory/* PRs -> unattended fix loop, capped at 2 attempts), onPullRequest (summary comment on opened PRs, bots skipped)
     linear.ts               # eve Linear channel via Connect; Agent Sessions; stamps trusted (workspace membership is the gate), injects requester name
     eve.ts                  # inbound route auth; dev-only localDevUser shim (user principal)
   connections/
@@ -65,7 +65,7 @@ evals/                      # eve eval runner suite: smoke, routing/, safety/, p
 | Component | Lives in | eve primitive | Responsibility |
 | --- | --- | --- | --- |
 | Orchestrator | `agent/agent.ts` + `instructions.ts` | Agent | Routes work items through the stations in order, verifies handoffs, runs the review loop (max 2 cycles), opens the draft PR, reports back; never writes code itself |
-| GitHub surface | `agent/channels/github.ts` | Channel | Intake and delivery: association-gated @Foreman mentions (stamped trusted), `factory`-label intake (rewritten to the autonomous principal, unattended framing injected), PR summary comments on opened PRs; replies render in-thread |
+| GitHub surface | `agent/channels/github.ts` | Channel | Intake and delivery: association-gated @Mercury mentions (stamped trusted), `factory`-label intake (rewritten to the autonomous principal, unattended framing injected), PR summary comments on opened PRs; replies render in-thread |
 | Linear surface | `agent/channels/linear.ts` | Channel | Linear Agent Sessions: users delegate issues to the factory; every session is stamped trusted (workspace membership); elicitations render natively |
 | Route auth | `agent/channels/eve.ts` | Channel | Inbound auth for the eve route; the `localDevUser` shim upgrades the dev principal to a user so user-scoped features work in the dev TUI |
 | GitHub tools | `agent/extensions/github.ts` | Extension | The orchestrator's GitHub surface as `github__*` tools: reads, triage writes, PR authoring; an explicit allowlist (no preset, no merge tools) with approval predicates doubling as the authorization policy |
@@ -87,10 +87,10 @@ Channels and the connection are I/O boundaries. Tools run in the app runtime (fu
 
 1. **Unattended intake (`factory` label):** a maintainer labels an issue `factory`. The `issues` webhook hits `onIssue`, which dispatches only on the `labeled` action (never a label carried on `opened`: issue templates let unauthenticated reporters pre-set labels). The session's auth is rewritten to the constructed autonomous principal, and an injected task frames the run: never ask, post questions and stop if clarification is needed, deliver a draft PR. The pipeline runs; the orchestrator opens the draft PR (`draft: true` needs no approval) and announces it in the closing reply the channel delivers to the issue.
 2. **Red CI on a factory PR:** a `check_suite` webhook with a failure conclusion, anchored to a pull request whose head branch starts with `factory/`, hits `onCheckSuite`. The session runs unattended on that PR's thread. The injected task self-limits: count earlier fix-attempt comments on the PR (each fresh session's only shared memory is the thread), stop and hand off to a person after 2, otherwise post an attempt comment, diagnose via `github__getCiFailureContext`, and run an implementer/reviewer revision that pushes to the same branch. Suites on branches people pushed never dispatch.
-3. **Attended intake (@Foreman mention):** `onComment` keeps the built-in mention and ignore rules, dispatches only for OWNER/MEMBER/COLLABORATOR commenters, and stamps `attributes.trusted`. The pipeline runs with the requester on the other end: clarifying questions go to them, reversible writes run without cards, shipping actions stop and wait for approval.
+3. **Attended intake (@Mercury mention):** `onComment` keeps the built-in mention and ignore rules, dispatches only for OWNER/MEMBER/COLLABORATOR commenters, and stamps `attributes.trusted`. The pipeline runs with the requester on the other end: clarifying questions go to them, reversible writes run without cards, shipping actions stop and wait for approval.
 4. **Linear sessions:** a user delegates an issue in Linear; `onAgentSession` stamps trusted and injects the requester's name. The factory works the item, posts progress as Agent Activities, and reports the PR link back on the session. Cross-tracker conventions come from the `github-linear-bridging` skill.
 5. **The pipeline itself:** the orchestrator grounds the work item (reads the real issue, dedupes via the `triaging-issues` skill), then delegates in order: classifier (text only) → optional researcher → analyst (reads its checkout) → implementer (branches, implements, verifies, `push_branch`) → reviewer (`checkout_branch`, judges the real diff). `request_changes` loops back to the implementer at most twice. Every delegation message is self-contained; stations never see the orchestrator's history.
-6. **PR opened (by someone else):** `onPullRequest` dispatches on the `opened` action (bot senders skipped, which covers `foreman[bot]`'s own PRs) with a summary task injected; the agent posts one orienting comment with a changed-files table.
+6. **PR opened (by someone else):** `onPullRequest` dispatches on the `opened` action (bot senders skipped, which covers `mercury[bot]`'s own PRs) with a summary task injected; the agent posts one orienting comment with a changed-files table.
 
 ## Data stores
 

@@ -1,5 +1,5 @@
 import { defineAgent } from "eve";
-import { MODELS } from "../../lib/models.js";
+import { agentModelConfig } from "../../lib/models.js";
 
 /**
  * Station 1: triage.
@@ -13,12 +13,12 @@ import { MODELS } from "../../lib/models.js";
  * the human instead of proceeding on guesses.
  */
 export default defineAgent({
+  ...agentModelConfig("classifier"),
   description:
     "Classify an incoming work item: type (bug/feature/refactor/question/chore/security), " +
     "priority, complexity, affected area, and whether it is actionable or needs " +
     "clarification. Fast triage only; no analysis or implementation. The caller passes " +
     "the work item verbatim in the message.",
-  model: MODELS.classifier,
   outputSchema: {
     additionalProperties: false,
     properties: {

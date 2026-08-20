@@ -5,7 +5,7 @@ import { GITHUB_CONNECTOR } from "./credentials.js";
  * Name used when nothing better can be resolved: no env override and no
  * reachable connector metadata. Matches the template's default persona.
  */
-const FALLBACK_BOT_NAME = "Foreman";
+const FALLBACK_BOT_NAME = "Mercury";
 
 /**
  * Upper bound on a resolved bot name before it is interpolated into a

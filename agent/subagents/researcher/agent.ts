@@ -1,5 +1,5 @@
 import { defineAgent } from "eve";
-import { MODELS } from "../../lib/models.js";
+import { agentModelConfig } from "../../lib/models.js";
 
 /**
  * Fresh-context web-research subagent.
@@ -18,12 +18,12 @@ import { MODELS } from "../../lib/models.js";
  * @see The research methodology and output contract in this folder's `instructions.md`.
  */
 export default defineAgent({
+  ...agentModelConfig("researcher"),
   description:
     "Research a topic on the open web for facts, statistics, primary sources, and links the " +
     "caller doesn't already have. Runs refined searches against reliable sources and returns " +
     "cited findings with confidence levels, plus the gaps it couldn't verify. The caller " +
     "passes the question and any known context in the message.",
-  model: MODELS.researcher,
   outputSchema: {
     additionalProperties: false,
     properties: {

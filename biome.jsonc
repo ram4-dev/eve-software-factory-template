@@ -1,6 +1,17 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/biome/core"],
+  "files": {
+    "includes": [
+      "agent/**",
+      "evals/**",
+      "packages/**",
+      "biome.jsonc",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "!**/dist"
+    ]
+  },
   "linter": {
     "rules": {
       "style": {
@@ -10,5 +21,27 @@
         "useFilenamingConvention": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/nan-ai-sdk/src/index.ts"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["como-funciona.html"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    }
+  ]
 }

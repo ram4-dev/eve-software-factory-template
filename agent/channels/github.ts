@@ -208,7 +208,7 @@ const PR_SUMMARY_TASK = [
 
 /**
  * GitHub channel: the factory's main intake and delivery surface, as
- * "Foreman".
+ * "Mercury".
  *
  * @remarks
  * - Credentials are brokered by Vercel Connect through the shared handle in

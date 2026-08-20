@@ -1,26 +1,27 @@
 import { defineAgent } from "eve";
-import { MODELS } from "../../lib/models.js";
+import { agentModelConfig } from "../../lib/models.js";
 
 /**
  * Station 4: independent review.
  *
  * @remarks
- * Runs on a different model vendor than the implementer on purpose: fresh
+ * Runs on a different model than the implementer on purpose: fresh
  * eyes are the station's point, and a different model doesn't share the
- * implementer's idiom or blind spots. It fetches the pushed branch into its
- * own checkout and judges the real diff against the analyst's acceptance
- * criteria; it never modifies code. Its verdict routes the pipeline: approve
- * ships a draft PR, request_changes loops back to the implementer (at most
- * twice), reject stops the line.
+ * implementer's idiom or blind spots. With the gateway provider that means
+ * a different vendor; with NaN it means a different model id (see models.ts).
+ * It fetches the pushed branch into its own checkout and judges the real diff
+ * against the analyst's acceptance criteria; it never modifies code. Its verdict
+ * routes the pipeline: approve ships a draft PR, request_changes loops back to the
+ * implementer (at most twice), reject stops the line.
  */
 export default defineAgent({
+  ...agentModelConfig("reviewer"),
   description:
     "Independently review a pushed factory branch against the original work item and its " +
     "acceptance criteria: fetch the branch, read the real diff, re-run cheap checks, and " +
     "return approve, request_changes, or reject with specific findings. Never modifies " +
     "code. The caller passes the work item, the analysis with acceptance criteria, the " +
     "branch name, and the implementer's report in the message.",
-  model: MODELS.reviewer,
   outputSchema: {
     additionalProperties: false,
     properties: {

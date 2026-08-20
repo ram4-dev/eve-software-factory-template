@@ -1,5 +1,5 @@
 import { defineAgent } from "eve";
-import { MODELS } from "../../lib/models.js";
+import { agentModelConfig } from "../../lib/models.js";
 
 /**
  * Station 2: analysis and planning.
@@ -12,13 +12,13 @@ import { MODELS } from "../../lib/models.js";
  * contract the reviewer later judges the implementation against, verbatim.
  */
 export default defineAgent({
+  ...agentModelConfig("analyst"),
   description:
     "Analyze a classified work item against the real repository checkout and produce an " +
     "implementation plan: problem statement, approach, ordered steps, affected files, " +
     "risks, acceptance criteria, and test strategy. Planning only; writes no code. The " +
     "caller passes the work item, its classification, and any research findings in the " +
     "message.",
-  model: MODELS.analyst,
   outputSchema: {
     additionalProperties: false,
     properties: {

@@ -1,0 +1,49 @@
+{
+  "name": "@nan-builders/ai-sdk",
+  "version": "0.1.0",
+  "description": "AI SDK provider for NaN Builders (OpenAI-compatible API at api.nan.builders)",
+  "keywords": [
+    "ai-sdk",
+    "nan",
+    "nan-builders",
+    "openai-compatible",
+    "llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vercel-labs/eve-software-factory-template",
+    "directory": "packages/nan-ai-sdk"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.30"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "^4.0.7",
+    "@types/node": "~24.13.3",
+    "typescript": "7.0.2",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@ai-sdk/provider": "^4.0.7",
+    "zod": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

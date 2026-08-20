@@ -1,11 +1,11 @@
 import { defineAgent } from "eve";
-import { MODELS } from "./lib/models.js";
+import { agentModelConfig } from "./lib/models.js";
 
 /**
  * Root agent runtime configuration.
  *
  * @remarks
- * Sets the model and the session budget for Foreman, the software factory
+ * Set the model and the session budget for Mercury, the software factory
  * orchestrator; the rest of the agent's surface (channels, connections,
  * extensions, tools, skills, subagents) is discovered from the filesystem
  * under `agent/`. Conversation history is compacted once it reaches 75% of
@@ -15,9 +15,9 @@ import { MODELS } from "./lib/models.js";
  * more than a chat reply.
  */
 export default defineAgent({
+  ...agentModelConfig("orchestrator"),
   compaction: { thresholdPercent: 0.75 },
   limits: {
     maxOutputTokensPerSession: 100_000,
   },
-  model: MODELS.orchestrator,
 });
